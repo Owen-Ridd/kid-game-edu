@@ -2,5 +2,5 @@
 :root { font-family: 'Nunito', sans-serif; color: #245c68; background: #d9f7fb; }
 * { box-sizing: border-box; }
 html, body { width: 100%; min-height: 100%; margin: 0; }
-body { overflow: hidden; }
+body { overflow-x: hidden; overflow-y: auto; }
 button, input { font: inherit; }

@@ -654,9 +654,9 @@
 .game-screen {
   position: relative;
   width: 100vw;
-  height: 100vh;
+  height: max(100vh, 900px);
   min-height: 600px;
-  overflow: hidden;
+  overflow: visible;
   background: linear-gradient(180deg, #D4EFFF 0%, #E9F7FF 55%, #A8E088 56%, #94D670 100%);
   font-family: 'Fredoka', 'Nunito', sans-serif;
   user-select: none;
@@ -1424,11 +1424,11 @@
   }
 }
 
-/* Mobile Screen (< 768px) – Portrait only keeps overflow:hidden */
+/* Mobile Screen (< 768px) – Portrait keeps enough room for vertical scrolling */
 @media (max-width: 767px) and (orientation: portrait) {
   .game-screen {
-    overflow: hidden;
-    height: 100dvh; /* Dynamic mobile viewport height */
+    overflow: visible;
+    height: max(100dvh, 760px); /* Dynamic mobile viewport height */
   }
 }
 
