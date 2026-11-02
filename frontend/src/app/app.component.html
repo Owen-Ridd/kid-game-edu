@@ -1,0 +1,523 @@
+@if (adminAuthenticated()) {
+  <main class="admin-screen">
+    <!-- Admin Top Header -->
+    <header class="admin-header">
+      <div class="game-brand">
+        <span class="brand-flower">🌸</span>
+        <span>Teacher Desk</span>
+      </div>
+      <div class="admin-header-actions">
+        <!-- Tab Navigation Switcher -->
+        <nav class="admin-tabs" aria-label="Admin Sections">
+          <button type="button" class="tab-btn" [class.active]="adminTab() === 'games'" (click)="adminTab.set('games')">
+            🎮 Bài tập & Cấu hình
+          </button>
+          <button type="button" class="tab-btn" [class.active]="adminTab() === 'sessions'" (click)="adminTab.set('sessions')">
+            🏫 Phòng học & Kết quả
+          </button>
+        </nav>
+        <button type="button" class="admin-logout" (click)="logoutAdmin()">Đăng xuất</button>
+      </div>
+    </header>
+
+    <section class="admin-content">
+      @if (adminNotice()) {
+        <div class="admin-notice-bar" role="alert">
+          <span>{{ adminNotice() }}</span>
+          <button type="button" class="notice-close" (click)="adminNotice.set('')">×</button>
+        </div>
+      }
+
+      <!-- TAB 1: GAME BUILDER & GAMES LIST -->
+      @if (adminTab() === 'games') {
+        <div class="admin-layout">
+          <!-- Game Builder Form Card -->
+          <section class="admin-card builder-card">
+            <div class="card-heading">
+              <div>
+                <span class="card-kicker">GAME BUILDER</span>
+                <h2>{{ editingGameId() ? 'Chỉnh sửa bài tập' : 'Tạo bài tập mới' }}</h2>
+              </div>
+              @if (editingGameId()) {
+                <span class="badge-editing">Đang sửa</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="game-title">Tên trò chơi / bài tập</label>
+              <input id="game-title" [(ngModel)]="gameTitle" placeholder="Ví dụ: Phân loại trái cây mùa hè" />
+            </div>
+
+            <!-- Builder Items Table -->
+            <div class="builder-section">
+              <div class="builder-section-head">
+                <span class="section-title">Danh sách Quả & Luật Ghép Rổ</span>
+                <button type="button" class="btn-add-item" (click)="addBuilderItem()">
+                  + Thêm quả
+                </button>
+              </div>
+
+              <div class="builder-table">
+                <div class="builder-table-header">
+                  <span>Loại quả / Preset</span>
+                  <span>Rổ đích tương ứng</span>
+                  <span>Hình ảnh</span>
+                  <span>Xóa</span>
+                </div>
+
+                @for (item of builderItems; track $index; let idx = $index) {
+                  <div class="builder-table-row">
+                    <!-- Preset / Name Picker -->
+                    <div class="row-cell">
+                      <select (change)="selectPreset(idx, $event)" [value]="item.id">
+                        <option value="">-- Chọn loại quả mẫu --</option>
+                        @for (preset of fruitPresets; track preset.id) {
+                          <option [value]="preset.id">{{ preset.name }}</option>
+                        }
+                      </select>
+                      <input [(ngModel)]="item.id" placeholder="Mã định danh (apple, lemon,...)" class="sub-input" />
+                    </div>
+
+                    <!-- Target Bucket Picker -->
+                    <div class="row-cell">
+                      <select [(ngModel)]="item.targetBucketId">
+                        <option value="basket-red">🔴 Rổ Đỏ (Basket-Red)</option>
+                        <option value="basket-yellow">🟡 Rổ Vàng (Basket-Yellow)</option>
+                        <option value="basket-green">🟢 Rổ Xanh (Basket-Green)</option>
+                        <option value="basket-orange">🟠 Rổ Cam (Basket-Orange)</option>
+                      </select>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="row-cell">
+                      <label class="btn-upload">
+                        {{ item.imageUrl ? '✓ Ảnh đã sẵn sàng' : '📁 Tải ảnh lên' }}
+                        <input type="file" accept="image/*" (change)="uploadBuilderImage(idx, $event)" />
+                      </label>
+                    </div>
+
+                    <!-- Delete Row Button -->
+                    <div class="row-cell cell-action">
+                      <button type="button" class="btn-delete-row" title="Xóa quả này" (click)="removeBuilderItem(idx)">
+                        🗑
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="builder-actions">
+              <button type="button" class="btn-primary" (click)="saveGame()">
+                {{ editingGameId() ? 'Cập nhật bài tập 💾' : 'Lưu & Xuất bản bài tập 🚀' }}
+              </button>
+              @if (editingGameId()) {
+                <button type="button" class="btn-secondary" (click)="cancelEdit()">
+                  Hủy sửa
+                </button>
+              }
+            </div>
+          </section>
+
+          <!-- Existing Games List Card -->
+          <section class="admin-card games-list-card">
+            <div class="card-heading">
+              <div>
+                <span class="card-kicker">KHO BÀI TẬP</span>
+                <h2>Danh sách đã tạo ({{ games.length }})</h2>
+              </div>
+              <button type="button" class="btn-refresh" (click)="refreshAdmin()">🔄</button>
+            </div>
+
+            <div class="games-table-wrapper">
+              @if (games.length) {
+                <div class="games-grid">
+                  @for (game of games; track game.id) {
+                    <div class="game-item-card" [class.selected]="selectedGameId === game.id">
+                      <div class="game-card-top">
+                        <span class="game-card-title">{{ game.title }}</span>
+                        <span class="badge-status">{{ game.status }}</span>
+                      </div>
+                      <div class="game-card-meta">
+                        <span>🍎 {{ game.items.length }} quả</span>
+                        <span>🧺 {{ game.buckets.length }} rổ</span>
+                      </div>
+                      <div class="game-card-actions">
+                        <button type="button" class="btn-card-action btn-edit" (click)="startEditGame(game)">
+                          ✏️ Sửa
+                        </button>
+                        <button type="button" class="btn-card-action btn-use" (click)="selectedGameId = game.id ?? ''; adminTab.set('sessions')">
+                          🏫 Mở phòng
+                        </button>
+                        @if (game.id) {
+                          <button type="button" class="btn-card-action btn-delete" (click)="deleteGame(game.id, $event)">
+                            🗑
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="empty-state">Chưa có bài tập nào. Hãy tạo bài tập ở khung bên cạnh.</p>
+              }
+            </div>
+          </section>
+        </div>
+      }
+
+      <!-- TAB 2: ROOM SESSIONS & LIVE ACTIVITY -->
+      @if (adminTab() === 'sessions') {
+        <div class="admin-layout">
+          <!-- Create Room Card -->
+          <section class="admin-card session-create-card">
+            <div class="card-heading">
+              <div>
+                <span class="card-kicker">MỞ PHÒNG CHƠI</span>
+                <h2>Cấp mã PIN lớp học</h2>
+              </div>
+              <span class="card-icon">⌁</span>
+            </div>
+
+            <div class="form-group">
+              <label for="session-game">Chọn bài tập</label>
+              <select id="session-game" [(ngModel)]="selectedGameId">
+                <option value="">-- Chọn bài tập muốn cho trẻ chơi --</option>
+                @for (game of games; track game.id) {
+                  <option [value]="game.id">{{ game.title }} ({{ game.items.length }} quả)</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="group-name">Tên nhóm / Lớp học</label>
+              <input id="group-name" [(ngModel)]="groupName" placeholder="Ví dụ: Nhóm Hoa Hướng Dương" />
+            </div>
+
+            <button type="button" class="btn-primary" [disabled]="!selectedGameId" (click)="createSession()">
+              Khởi tạo phòng & Sinh mã PIN <span>→</span>
+            </button>
+
+            <!-- Latest PIN Display -->
+            @if (latestPin()) {
+              <div class="pin-showcase">
+                <span class="pin-showcase-label">MÃ PIN MỚI NHẤT</span>
+                <div class="pin-showcase-code">{{ latestPin() }}</div>
+                <button type="button" class="btn-copy-pin" (click)="copyPin(latestPin())">
+                  📋 Sao chép mã PIN
+                </button>
+              </div>
+            }
+          </section>
+
+          <!-- Sessions List Card -->
+          <section class="admin-card sessions-list-card">
+            <div class="card-heading">
+              <div>
+                <span class="card-kicker">THEO DÕI HOẠT ĐỘNG</span>
+                <h2>Các phòng hôm nay ({{ sessions.length }})</h2>
+              </div>
+              <button type="button" class="btn-refresh" (click)="refreshAdmin()">🔄</button>
+            </div>
+
+            <div class="sessions-table-wrapper">
+              @if (sessions.length) {
+                <div class="sessions-table">
+                  <div class="table-row table-head">
+                    <span>Tên nhóm</span>
+                    <span>Mã PIN</span>
+                    <span>Bài tập</span>
+                    <span>Lỗi sai</span>
+                    <span>Trạng thái</span>
+                    <span>Hành động</span>
+                  </div>
+
+                  @for (session of sessions; track session.id) {
+                    <div class="table-row">
+                      <span class="group-cell"><strong>{{ session.groupName }}</strong></span>
+                      <span class="pin-cell">
+                        <code>{{ session.pinCode }}</code>
+                        <button type="button" class="mini-copy-btn" title="Copy PIN" (click)="copyPin(session.pinCode)">📋</button>
+                      </span>
+                      <span>{{ getGameTitle(session.gameId) }}</span>
+                      <span class="mistake-badge" [class.has-mistakes]="session.mistakeCount > 0">
+                        {{ session.mistakeCount }} lỗi
+                      </span>
+                      <span>
+                        <span class="status-pill" [class.active]="session.active" [class.closed]="!session.active">
+                          {{ session.active ? '● Đang mở' : 'Đã đóng' }}
+                        </span>
+                      </span>
+                      <span class="action-cell">
+                        @if (session.active && session.id) {
+                          <button type="button" class="btn-close-room" (click)="deactivateSession(session.id)">
+                            Đóng phòng
+                          </button>
+                        } @else {
+                          <span class="text-muted">Hoàn tất</span>
+                        }
+                      </span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="empty-state">Chưa có phòng chơi nào. Hãy tạo một phòng mới ở khung bên cạnh.</p>
+              }
+            </div>
+          </section>
+        </div>
+      }
+    </section>
+  </main>
+} @else if (!joined()) {
+  <!-- PIN ENTRY SCREEN (CHILDREN / TEACHER) -->
+  <main class="pin-screen">
+    <div class="pin-cloud cloud-one"></div>
+    <div class="pin-cloud cloud-two"></div>
+    <button type="button" class="admin-link" (click)="adminLoginOpen.set(true)">Teacher login</button>
+    <section class="pin-card" aria-labelledby="pin-title">
+      <span class="pin-flower-mascot">❄️</span>
+      <p class="tiny-label">KID GAME EDU - AN TOÀN KHOA HỌC</p>
+      <h1 id="pin-title">Bài Học Đá Khô</h1>
+      <p class="pin-help">Nhập mã phòng hoặc nhấn chơi ngay bên dưới!</p>
+      <label for="pin">Mã phòng (PIN)</label>
+      <input id="pin" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" [(ngModel)]="pin" (keyup.enter)="joinSession()" />
+      <button type="button" class="big-button" (click)="joinSession()">Vào phòng <span>→</span></button>
+      <button type="button" class="quick-play-btn" (click)="playDryIceDemo()">
+        ❄️ Vào chơi ngay: Bài học Đá Khô <span>▶</span>
+      </button>
+      @if (pinError()) { <p class="pin-error" role="alert">{{ pinError() }}</p> }
+    </section>
+    @if (adminLoginOpen()) {
+      <div class="admin-backdrop" role="presentation" (click)="adminLoginOpen.set(false)">
+        <form class="admin-login" aria-labelledby="admin-title" (submit)="$event.preventDefault(); loginAdmin()" (click)="$event.stopPropagation()">
+          <button type="button" class="modal-close" aria-label="Close" (click)="adminLoginOpen.set(false)">×</button>
+          <span class="modal-teacher-icon">👩‍🏫</span>
+          <p class="tiny-label">TEACHER DESK</p>
+          <h2 id="admin-title">Đăng nhập Quản trị</h2>
+          <label for="admin-username">Tên đăng nhập</label>
+          <input id="admin-username" [(ngModel)]="adminUsername" name="adminUsername" autocomplete="username" required />
+          <label for="admin-password">Mật khẩu</label>
+          <input id="admin-password" type="password" [(ngModel)]="adminPassword" name="adminPassword" autocomplete="current-password" required />
+          <button type="submit" class="big-button">Đăng nhập <span>→</span></button>
+          @if (adminError()) { <p class="pin-error" role="alert">{{ adminError() }}</p> }
+        </form>
+      </div>
+    }
+  </main>
+} @else {
+  <!-- GAMEPLAY SCREEN: ROBUST DRAG & DROP WITH CDK DROP LIST GROUP -->
+  <main class="game-screen" [class.complete]="completed()">
+    <!-- Top HUD Navigation (Minimalist - Only Utility Controls) -->
+    <header class="game-hud clean-hud">
+      <div class="hud-spacer"></div>
+
+      <div class="hud-controls">
+        <button type="button" class="hud-icon-btn" [title]="sound.isMuted() ? 'Bật âm thanh' : 'Tắt âm thanh'" (click)="sound.toggleMute()">
+          {{ sound.isMuted() ? '🔇' : '🔊' }}
+        </button>
+        <button type="button" class="hud-icon-btn exit-btn" title="Rời phòng" (click)="leaveRoom()">
+          🚪 Thoát
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Playfield (Connected Drag & Drop Group) -->
+    <section class="playfield" cdkDropListGroup aria-label="Fruit Garden Sorting Game">
+      <!-- Background Clouds & Sparkles -->
+      <div class="cloud-dec cloud-left"></div>
+      <div class="cloud-dec cloud-right"></div>
+      <div class="sparkle sparkle-1">❄️</div>
+      <div class="sparkle sparkle-2">✨</div>
+      <div class="sparkle sparkle-3">❄️</div>
+      <div class="sparkle sparkle-4">💨</div>
+
+      <!-- Educational Danger Warning Toast -->
+      @if (warningMessage()) {
+        <div class="danger-warning-banner" role="alert">
+          {{ warningMessage() }}
+        </div>
+      }
+
+      <!-- Tree Canopy Graphic (Background Layer - pointer-events: none) -->
+      <div class="tree-canopy-layer">
+        <svg class="tree-canopy-svg" viewBox="0 0 1200 520" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="trunkGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#6F3F19" />
+              <stop offset="50%" stop-color="#8F5932" />
+              <stop offset="100%" stop-color="#5E3314" />
+            </linearGradient>
+            <filter id="softShadow" x="-5%" y="-5%" width="110%" height="115%">
+              <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#1B5528" flood-opacity="0.28" />
+            </filter>
+          </defs>
+
+          <!-- Tree Trunk & Roots -->
+          <g id="trunk">
+            <path d="M 520 280 C 510 360, 480 440, 440 515 L 530 515 C 555 450, 560 380, 560 300 Z" fill="url(#trunkGrad)" />
+            <path d="M 680 280 C 690 360, 720 440, 760 515 L 670 515 C 645 450, 640 380, 640 300 Z" fill="url(#trunkGrad)" />
+            <path d="M 540 250 L 535 515 L 665 515 L 660 250 Z" fill="url(#trunkGrad)" />
+            <path d="M 545 280 C 470 240, 390 200, 330 225 C 385 180, 480 210, 555 240 Z" fill="#6A3C17" />
+            <path d="M 655 280 C 730 240, 810 200, 870 225 C 815 180, 720 210, 645 240 Z" fill="#6A3C17" />
+          </g>
+
+          <!-- Canopy Layers -->
+          <g id="canopy-back" filter="url(#softShadow)" fill="#1F753C">
+            <circle cx="130" cy="255" r="115" /><circle cx="210" cy="180" r="130" /><circle cx="330" cy="120" r="135" />
+            <circle cx="480" cy="85" r="140" /><circle cx="600" cy="70" r="145" /><circle cx="720" cy="85" r="140" />
+            <circle cx="870" cy="120" r="135" /><circle cx="990" cy="180" r="130" /><circle cx="1070" cy="255" r="115" />
+            <circle cx="180" cy="330" r="95" /><circle cx="310" cy="340" r="90" /><circle cx="430" cy="335" r="85" />
+            <circle cx="770" cy="335" r="85" /><circle cx="890" cy="340" r="90" /><circle cx="1020" cy="330" r="95" />
+          </g>
+          <g id="canopy-mid" fill="#32A34E">
+            <circle cx="160" cy="245" r="105" /><circle cx="240" cy="175" r="115" /><circle cx="360" cy="125" r="120" />
+            <circle cx="490" cy="95" r="125" /><circle cx="600" cy="85" r="130" /><circle cx="710" cy="95" r="125" />
+            <circle cx="840" cy="125" r="120" /><circle cx="960" cy="175" r="115" /><circle cx="1040" cy="245" r="105" />
+            <path d="M 160 250 C 200 120, 1000 120, 1040 250 C 1040 340, 160 340, 160 250 Z" />
+          </g>
+          <g id="canopy-front" fill="#58C363">
+            <circle cx="210" cy="210" r="85" /><circle cx="320" cy="150" r="95" /><circle cx="440" cy="120" r="95" />
+            <circle cx="560" cy="105" r="100" /><circle cx="640" cy="105" r="100" /><circle cx="760" cy="120" r="95" />
+            <circle cx="880" cy="150" r="95" /><circle cx="990" cy="210" r="85" />
+            <ellipse cx="600" cy="130" rx="140" ry="70" fill="#78D668" opacity="0.6" />
+            <ellipse cx="360" cy="170" rx="90" ry="50" fill="#78D668" opacity="0.55" />
+            <ellipse cx="840" cy="170" rx="90" ry="50" fill="#78D668" opacity="0.55" />
+          </g>
+          <g id="flowers" fill="#E0F7FA">
+            <circle cx="220" cy="300" r="7" /><circle cx="230" cy="300" r="7" /><circle cx="225" cy="292" r="7" /><circle cx="225" cy="308" r="7" />
+            <circle cx="225" cy="300" r="5" fill="#80DEEA" />
+            <circle cx="450" cy="190" r="8" /><circle cx="462" cy="190" r="8" /><circle cx="456" cy="182" r="8" /><circle cx="456" cy="198" r="8" />
+            <circle cx="456" cy="190" r="5.5" fill="#80DEEA" />
+            <circle cx="740" cy="200" r="7" /><circle cx="750" cy="200" r="7" /><circle cx="745" cy="192" r="7" /><circle cx="745" cy="208" r="7" />
+            <circle cx="745" cy="200" r="5" fill="#80DEEA" />
+            <circle cx="980" cy="285" r="8" /><circle cx="992" cy="285" r="8" /><circle cx="986" cy="277" r="8" /><circle cx="986" cy="293" r="8" />
+            <circle cx="986" cy="285" r="5.5" fill="#80DEEA" />
+            <circle cx="340" cy="240" r="5" fill="#FFFFFF" opacity="0.8" />
+            <circle cx="670" cy="150" r="5" fill="#FFFFFF" opacity="0.8" />
+            <circle cx="890" cy="230" r="5" fill="#FFFFFF" opacity="0.8" />
+          </g>
+        </svg>
+      </div>
+
+      <!-- Fruit Drag Layer: Each Fruit has an Anchor to prevent offset jumping -->
+      <div class="tree-fruits-layer" cdkDropList [id]="treeDropListId" [cdkDropListSortingDisabled]="true">
+        @for (fruit of items; track fruit.id) {
+          <div class="fruit-anchor"
+               [style.left.%]="fruit.leftPercent"
+               [style.top.%]="fruit.topPercent"
+               [class.hidden-anchor]="isPlaced(fruit.id)">
+            <!-- Inner element handles Drag and Drop smoothly -->
+            <div class="fruit-sticker"
+                 cdkDrag
+                 [cdkDragData]="fruit"
+                 [title]="fruit.label">
+              <img [src]="fruit.imageUrl || fruitPlaceholder(fruit.id)" [alt]="fruit.label" />
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Grassy Bottom Meadow Background -->
+      <div class="meadow-ground"></div>
+
+      <!-- Basket Drop Zones Row (Supports 1 single large basket or multiple baskets) -->
+      <div class="basket-row" [class.single-basket]="baskets.length === 1">
+        @for (basket of baskets; track basket.id) {
+          <div class="basket-column">
+            <!-- Dashed Drop Area with Custom Vector Basket or Custom Image -->
+            <div class="basket-dashed-box"
+                 [class.correct]="basket.correct"
+                 [class.wrong]="basket.wrong"
+                 [class.has-image]="!!basket.imageUrl"
+                 cdkDropList
+                 [id]="basket.id"
+                 (cdkDropListDropped)="dropIntoBasket(basket, $event)">
+
+              @if (basket.imageUrl) {
+                <!-- Custom Basket Image (e.g. da-kho.png) -->
+                <div class="basket-custom-image-box">
+                  <img [src]="basket.imageUrl" [alt]="basket.caption" class="basket-photo" />
+                  <div class="basket-ice-badge">❄️ Khói Lạnh Cực Độ</div>
+                </div>
+              } @else {
+                <!-- Vector Basket SVG -->
+                <svg class="basket-vector" viewBox="0 0 160 130" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M 32 58 C 32 16, 128 16, 128 58"
+                        [attr.stroke]="basket.handleColor"
+                        stroke-width="12"
+                        stroke-linecap="round"
+                        fill="none" />
+                  <rect x="18" y="50" width="124" height="22" rx="11"
+                        [attr.fill]="basket.rimColor"
+                        [attr.stroke]="basket.handleColor"
+                        stroke-width="3" />
+                  <path d="M 24 64 L 34 116 C 36 122, 42 126, 48 126 L 112 126 C 118 126, 124 122, 126 116 L 136 64 Z"
+                        [attr.fill]="basket.bodyColor"
+                        [attr.stroke]="basket.handleColor"
+                        stroke-width="3" />
+                  <text x="80" y="104"
+                        text-anchor="middle"
+                        font-family="'Fredoka', sans-serif"
+                        font-size="20"
+                        font-weight="700"
+                        [attr.fill]="basket.textColor">{{ basket.caption }}</text>
+                </svg>
+              }
+
+              <!-- Collected Items Row Inside Basket -->
+              @if (basket.placedFruits && basket.placedFruits.length) {
+                <div class="placed-fruits-collection">
+                  @for (pf of basket.placedFruits; track pf.id) {
+                    <div class="placed-mini-badge pop-in" [title]="pf.label">
+                      <img [src]="pf.imageUrl || fruitPlaceholder(pf.id)" [alt]="pf.label" />
+                      <span>{{ pf.label }}</span>
+                    </div>
+                  }
+                </div>
+              } @else if (basket.placedFruit) {
+                <div class="placed-fruit-badge pop-in">
+                  <img [src]="basket.placedFruit.imageUrl || fruitPlaceholder(basket.placedFruit.id)" [alt]="basket.placedFruit.label" />
+                </div>
+              }
+
+              <!-- Success Checkmark Badge -->
+              @if (basket.correct) {
+                <div class="basket-check-badge">✓</div>
+              }
+              <!-- Wrong Mark Badge -->
+              @if (basket.wrong) {
+                <div class="basket-wrong-badge">×</div>
+              }
+            </div>
+
+            <!-- Basket Label Underneath -->
+            <span class="basket-caption">{{ basket.caption }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Canvas Fireworks Layer (Smooth 60FPS particles, no overlay blocking) -->
+      <canvas #fireworksCanvas class="fireworks-canvas"></canvas>
+
+      <!-- Completion Experience: Green Check Animation & Replay Action (No modal/overlay) -->
+      @if (completed()) {
+        <div class="completion-celebration">
+          <div class="green-check-badge-burst">
+            <div class="glow-ring"></div>
+            <div class="check-circle-icon">
+              <svg viewBox="0 0 52 52" class="checkmark-svg">
+                <circle class="checkmark-circle" cx="26" cy="26" r="23" fill="none"/>
+                <path class="checkmark-check" fill="none" d="M14 27 l8 8 l16 -16"/>
+              </svg>
+            </div>
+          </div>
+          <button type="button" class="btn-celebrate-replay" (click)="resetGame()">
+            🔄 Chơi lại
+          </button>
+        </div>
+      }
+    </section>
+  </main>
+}

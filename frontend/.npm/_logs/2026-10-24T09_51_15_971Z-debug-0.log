@@ -1,0 +1,13 @@
+0 verbose cli /opt/homebrew/Cellar/node/24.7.0/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.5.1
+2 info using node@v24.7.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/owenriddle/kid-game-edu/frontend/.npmrc
+5 silly config load:file:/opt/homebrew/etc/npmrc
+6 verbose title npm run build
+7 verbose argv "run" "build"
+8 verbose logfile logs-max:10 dir:/Users/owenriddle/kid-game-edu/frontend/.npm/_logs/2026-10-24T09_51_15_971Z-
+9 verbose logfile /Users/owenriddle/kid-game-edu/frontend/.npm/_logs/2026-10-24T09_51_15_971Z-debug-0.log
+10 silly logfile done cleaning log files
+11 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with ENOTFOUND
+12 http fetch GET https://registry.npmjs.org/npm attempt 2 failed with ENOTFOUND

@@ -1,0 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+:root { font-family: 'Nunito', sans-serif; color: #245c68; background: #d9f7fb; }
+* { box-sizing: border-box; }
+html, body { width: 100%; min-height: 100%; margin: 0; }
+body { overflow: hidden; }
+button, input { font: inherit; }

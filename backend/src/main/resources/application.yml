@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: kid-game-edu-backend
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/kid_game_edu}
+
+server:
+  port: ${PORT:${SERVER_PORT:8080}}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  admin:
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+  demo-seed-enabled: ${DEMO_SEED_ENABLED:false}
+
+cloudinary:
+  enabled: ${CLOUDINARY_ENABLED:false}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
