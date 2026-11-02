@@ -1424,12 +1424,26 @@
   }
 }
 
-/* Mobile Screen (< 768px) */
-@media (max-width: 767px) {
+/* Mobile Screen (< 768px) – Portrait only keeps overflow:hidden */
+@media (max-width: 767px) and (orientation: portrait) {
   .game-screen {
     overflow: hidden;
     height: 100dvh; /* Dynamic mobile viewport height */
   }
+}
+
+/* Mobile Screen (< 768px) – Landscape: allow vertical scroll */
+@media (max-width: 767px) and (orientation: landscape) {
+  .game-screen {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+    min-height: 100dvh;
+  }
+}
+
+/* Mobile Screen (< 768px) – shared rules */
+@media (max-width: 767px) {
 
   .game-hud {
     top: 10px;
@@ -1524,3 +1538,88 @@
 }
 
 
+/* ======================================================
+   Mobile Landscape – shrink tree + basket to fit / allow scroll
+   ====================================================== */
+@media (max-width: 900px) and (orientation: landscape) {
+  .game-screen {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .game-hud {
+    top: 5px;
+    right: 8px;
+    left: 8px;
+  }
+
+  .hud-icon-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .hud-icon-btn.exit-btn {
+    min-width: 64px;
+    height: 32px;
+    font-size: 12px;
+    padding: 0 10px;
+  }
+
+  /* Compact tree in landscape */
+  .tree-canopy-layer, .tree-fruits-layer {
+    top: 5px;
+    width: 98vw;
+    height: clamp(200px, 55vh, 290px);
+  }
+
+  /* Smaller fruit anchors for landscape touch */
+  .fruit-anchor {
+    width: clamp(70px, 20vw, 100px);
+    height: clamp(48px, 14vw, 70px);
+  }
+
+  /* Shorter meadow so basket is visible */
+  .meadow-ground {
+    height: clamp(90px, 22vh, 140px);
+  }
+
+  /* Basket positioned closer to bottom */
+  .basket-row.single-basket {
+    bottom: 6px;
+    max-width: min(300px, 88vw);
+  }
+
+  .basket-row.single-basket .basket-dashed-box {
+    min-height: 95px;
+    padding: 6px;
+    border-radius: 16px;
+    border-width: 2.5px;
+  }
+
+  .basket-custom-image-box {
+    max-width: 170px;
+    height: 72px;
+    border-radius: 12px;
+  }
+
+  .basket-caption {
+    font-size: 12px;
+  }
+
+  .basket-ice-badge {
+    font-size: 9px;
+    padding: 2px 5px;
+  }
+
+  .placed-mini-badge img {
+    width: 16px;
+    height: 16px;
+  }
+
+  .placed-mini-badge span {
+    font-size: 9px;
+  }
+}
